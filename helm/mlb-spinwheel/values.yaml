@@ -1,0 +1,38 @@
+namespace:
+  name: mlbteams
+
+replicaCount: 1
+
+image:
+  repository: registry.k8s.blacktoaster.com/mlb-spinwheel
+  pullPolicy: Always
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    external-dns.alpha.kubernetes.io/target: "pi5.k8s.blacktoaster.com"
+  host: mlbteams.k8s.blacktoaster.com
+  tls:
+    enabled: true
+    secretName: mlb-spinwheel-tls
+
+certificate:
+  enabled: true
+  issuerName: vault-issuer
+  issuerKind: ClusterIssuer
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

@@ -11,17 +11,20 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 10px;
 }
 
 .container {
     text-align: center;
     padding: 20px;
+    max-width: 100%;
+    width: 100%;
 }
 
 h1 {
     color: white;
-    margin-bottom: 30px;
-    font-size: 2.5em;
+    margin-bottom: 20px;
+    font-size: clamp(1.5em, 5vw, 2.5em);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
@@ -30,25 +33,31 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #wheel {
     border-radius: 50%;
     box-shadow: 0 0 30px rgba(0,0,0,0.3);
     background: white;
+    max-width: 100%;
+    height: auto;
 }
 
 .spinner {
     position: absolute;
-    top: -20px;
+    top: -15px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 20px solid transparent;
-    border-right: 20px solid transparent;
-    border-top: 40px solid #ff0000;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 30px solid #ff0000;
     z-index: 10;
     filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3));
 }
@@ -57,13 +66,15 @@ h1 {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     border: none;
     color: white;
-    padding: 15px 50px;
-    font-size: 1.5em;
+    padding: 12px 40px;
+    font-size: clamp(1.2em, 4vw, 1.5em);
     font-weight: bold;
     border-radius: 50px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: auto;
+    max-width: 90%;
 }
 
 #spin-btn:hover {
@@ -83,10 +94,12 @@ h1 {
 }
 
 #result {
-    margin-top: 30px;
-    font-size: 2em;
+    margin-top: 20px;
+    font-size: clamp(1.3em, 4vw, 2em);
     font-weight: bold;
     color: white;
-    min-height: 60px;
+    min-height: 50px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    word-wrap: break-word;
+    padding: 0 10px;
 }

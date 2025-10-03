@@ -39,6 +39,14 @@ const result = document.getElementById('result');
 let currentRotation = 0;
 let isSpinning = false;
 
+// Set canvas size based on viewport
+function resizeCanvas() {
+    const size = Math.min(500, window.innerWidth - 40);
+    canvas.width = size;
+    canvas.height = size;
+    drawWheel();
+}
+
 // Draw the wheel
 function drawWheel() {
     const centerX = canvas.width / 2;
@@ -66,7 +74,8 @@ function drawWheel() {
         ctx.rotate(startAngle + sliceAngle / 2);
         ctx.textAlign = 'right';
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 12px Arial';
+        const fontSize = Math.max(8, Math.min(12, radius / 25));
+        ctx.font = `bold ${fontSize}px Arial`;
         ctx.fillText(team.name, radius - 10, 5);
         ctx.restore();
     });
@@ -154,5 +163,12 @@ function spinWheel() {
 
 spinBtn.addEventListener('click', spinWheel);
 
-// Initial draw
-drawWheel();
+// Handle window resize
+window.addEventListener('resize', () => {
+    if (!isSpinning) {
+        resizeCanvas();
+    }
+});
+
+// Initial setup
+resizeCanvas();

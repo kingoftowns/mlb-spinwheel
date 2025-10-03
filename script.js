@@ -36,57 +36,62 @@ const ctx = canvas.getContext('2d');
 const spinBtn = document.getElementById('spin-btn');
 const result = document.getElementById('result');
 
-let currentRotation = 0;
+let currentOffset = 0;
 let isSpinning = false;
 
 // Set canvas size based on viewport
 function resizeCanvas() {
-    const size = Math.min(500, window.innerWidth - 40);
-    canvas.width = size;
-    canvas.height = size;
+    const width = Math.min(400, window.innerWidth - 60);
+    const height = Math.min(600, window.innerHeight - 250);
+    canvas.width = width;
+    canvas.height = height;
     drawWheel();
 }
 
 // Draw the wheel
 function drawWheel() {
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = canvas.width / 2;
-    const sliceAngle = (2 * Math.PI) / teams.length;
+    const slotHeight = 60;
+    const totalHeight = teams.length * slotHeight;
 
-    teams.forEach((team, index) => {
-        const startAngle = index * sliceAngle + currentRotation;
-        const endAngle = startAngle + sliceAngle;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw slice
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-        ctx.lineTo(centerX, centerY);
-        ctx.fillStyle = team.color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+    // Create repeating pattern for seamless scrolling
+    const offset = currentOffset % totalHeight;
 
-        // Draw text
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(startAngle + sliceAngle / 2);
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#fff';
-        const fontSize = Math.max(8, Math.min(12, radius / 25));
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.fillText(team.name, radius - 10, 5);
-        ctx.restore();
-    });
+    // Draw slots (draw extra above and below for seamless wrap)
+    for (let repeat = -1; repeat <= 2; repeat++) {
+        teams.forEach((team, index) => {
+            const y = repeat * totalHeight + index * slotHeight - offset;
 
-    // Draw center circle
+            // Only draw if visible
+            if (y + slotHeight >= 0 && y <= canvas.height) {
+                // Draw slot background
+                ctx.fillStyle = team.color;
+                ctx.fillRect(0, y, canvas.width, slotHeight);
+
+                // Draw border
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(0, y, canvas.width, slotHeight);
+
+                // Draw team name
+                ctx.fillStyle = '#fff';
+                const fontSize = Math.max(12, Math.min(18, canvas.width / 20));
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(team.name, canvas.width / 2, y + slotHeight / 2);
+            }
+        });
+    }
+
+    // Draw center pointer line (right side)
+    const pointerY = canvas.height / 2;
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 3;
+    ctx.moveTo(canvas.width - 10, pointerY);
+    ctx.lineTo(canvas.width + 30, pointerY);
     ctx.stroke();
 }
 
@@ -97,13 +102,18 @@ function spinWheel() {
     spinBtn.disabled = true;
     result.textContent = '';
 
-    const spinDuration = 4000; // 4 seconds
-    const minSpins = 5;
-    const maxSpins = 8;
-    const totalRotation = (Math.random() * (maxSpins - minSpins) + minSpins) * 2 * Math.PI;
+    const spinDuration = 5000; // 5 seconds
+    const slotHeight = 60;
+    const totalHeight = teams.length * slotHeight;
+
+    // Random spin distance (multiple full rotations plus random offset)
+    const minSpins = 4;
+    const maxSpins = 7;
+    const spins = Math.random() * (maxSpins - minSpins) + minSpins;
+    const totalDistance = spins * totalHeight;
 
     const startTime = Date.now();
-    const startRotation = currentRotation;
+    const startOffset = currentOffset;
 
     function animate() {
         const now = Date.now();
@@ -113,45 +123,30 @@ function spinWheel() {
         // Easing function for smooth deceleration
         const easeOut = 1 - Math.pow(1 - progress, 3);
 
-        currentRotation = startRotation + totalRotation * easeOut;
+        currentOffset = startOffset + totalDistance * easeOut;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawWheel();
 
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
-            // Determine winner - find which slice is at the top center
-            const sliceAngle = (2 * Math.PI) / teams.length;
-            const normalizedRotation = ((currentRotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            // Determine winner - which team is at center pointer
+            const pointerY = canvas.height / 2;
+            const normalizedOffset = currentOffset % totalHeight;
 
-            // The pointer is at the top (3π/2 in our coordinate system)
-            // We need to find which slice index is at that position
-            // Slices start at index 0 at angle 0, and go clockwise
-            const pointerPosition = (3 * Math.PI / 2);
+            // Calculate which team is at the pointer position
+            // The pointer is at canvas.height / 2
+            // We need to find which slot's Y position contains the pointer
 
-            // Find which slice the pointer is in by checking each slice's angle range
-            let winningIndex = 0;
-            for (let i = 0; i < teams.length; i++) {
-                const sliceStart = (i * sliceAngle + normalizedRotation) % (2 * Math.PI);
-                const sliceEnd = ((i + 1) * sliceAngle + normalizedRotation) % (2 * Math.PI);
+            // When drawing, the slot Y position is: repeat * totalHeight + index * slotHeight - offset
+            // At the pointer, we need: y <= pointerY < y + slotHeight
+            // Solving: repeat * totalHeight + index * slotHeight - offset <= pointerY
+            // We want the index where the slot center aligns with pointer
 
-                // Check if pointer position falls within this slice
-                if (sliceStart <= sliceEnd) {
-                    if (pointerPosition >= sliceStart && pointerPosition < sliceEnd) {
-                        winningIndex = i;
-                        break;
-                    }
-                } else {
-                    // Handle wrap-around case
-                    if (pointerPosition >= sliceStart || pointerPosition < sliceEnd) {
-                        winningIndex = i;
-                        break;
-                    }
-                }
-            }
+            const relativePosition = (normalizedOffset + pointerY) % totalHeight;
+            const winningIndex = Math.floor(relativePosition / slotHeight) % teams.length;
 
-            console.log('Rotation:', normalizedRotation, 'Winning index:', winningIndex, 'Team:', teams[winningIndex].name);
+            console.log('Offset:', normalizedOffset, 'Relative pos:', relativePosition, 'Winning index:', winningIndex, 'Team:', teams[winningIndex].name);
             result.textContent = teams[winningIndex].name;
             isSpinning = false;
             spinBtn.disabled = false;

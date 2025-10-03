@@ -6,7 +6,7 @@ replicaCount: 1
 image:
   repository: registry.k8s.blacktoaster.com/mlb-spinwheel
   pullPolicy: Always
-  tag: "latest"
+  tag: "e2a9675"
 
 service:
   type: ClusterIP

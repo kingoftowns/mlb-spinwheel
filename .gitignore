@@ -1,5 +1,23 @@
-# Node modules
+# Dependencies
 node_modules/
+frontend/node_modules/
+
+# Build outputs
+backend/spinwheel-server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go specific
+*.test
+*.out
+vendor/
+
+# Environment variables
+.env
+.env.local
 
 # Logs
 *.log
@@ -9,11 +27,18 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
+# IDE (keep .vscode/launch.json for debugging)
+.vscode/*
+!.vscode/launch.json
 .idea/
+*.swp
+*.swo
+*~
 
 # Helm
 helm/mlb-spinwheel/index.html
 helm/mlb-spinwheel/script.js
 helm/mlb-spinwheel/style.css
+
+# Secrets (never commit API keys!)
+**/values-secret.yaml

@@ -1,0 +1,25 @@
+namespace:
+  name: spinwheel
+
+replicaCount: 1
+
+image:
+  repository: registry.k8s.blacktoaster.com/spinwheel-backend
+  pullPolicy: Always
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+claude:
+  # Set your Claude API key here or via --set claude.apiKey=YOUR_KEY
+  apiKey: ""
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

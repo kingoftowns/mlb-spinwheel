@@ -1,0 +1,11 @@
+{
+  "name": "spinwheel-frontend",
+  "version": "1.0.0",
+  "description": "Dynamic spinwheel frontend",
+  "scripts": {
+    "start": "npx http-server -p 3000 -o --proxy http://localhost:9090?"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

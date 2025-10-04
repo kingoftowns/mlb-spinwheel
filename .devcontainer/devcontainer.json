@@ -1,14 +1,45 @@
 {
-  "name": "MLB Spinwheel",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",
-  "forwardPorts": [3000],
-  "postCreateCommand": "npm install",
+  "name": "Spinwheel - Go Backend",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.24"
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
   "customizations": {
     "vscode": {
+      "settings": {
+        "go.toolsManagement.checkForUpdates": "local",
+        "go.useLanguageServer": true,
+        "go.gopath": "/go",
+        "go.lintTool": "golangci-lint",
+        "go.lintFlags": [
+          "--fast"
+        ],
+        "[go]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+          }
+        }
+      },
       "extensions": [
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "golang.Go",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "EditorConfig.EditorConfig",
+        "streetsidesoftware.code-spell-checker",
+        "humao.rest-client"
       ]
     }
-  }
+  },
+  "forwardPorts": [
+    9090
+  ],
+  "postCreateCommand": "git config --global --add safe.directory /workspace && cd backend && go mod download && go install github.com/air-verse/air@latest",
+  "remoteUser": "vscode"
 }

@@ -1,12 +1,12 @@
 namespace:
-  name: mlbteams
+  name: spinwheel
 
 replicaCount: 1
 
 image:
-  repository: registry.k8s.blacktoaster.com/mlb-spinwheel
+  repository: registry.k8s.blacktoaster.com/spinwheel-frontend
   pullPolicy: Always
-  tag: "e2a9675"
+  tag: "latest"
 
 service:
   type: ClusterIP
@@ -19,10 +19,10 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     external-dns.alpha.kubernetes.io/target: "pi5.k8s.blacktoaster.com"
-  host: mlbteams.k8s.blacktoaster.com
+  host: spinwheel.k8s.blacktoaster.com
   tls:
     enabled: true
-    secretName: mlb-spinwheel-tls
+    secretName: spinwheel-frontend-tls
 
 certificate:
   enabled: true

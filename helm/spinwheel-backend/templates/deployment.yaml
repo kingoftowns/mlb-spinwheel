@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "spinwheel-backend.fullname" . }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "spinwheel-backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "spinwheel-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "spinwheel-backend.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8080"
+        {{- if .Values.claude.apiKey }}
+        - name: CLAUDE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "spinwheel-backend.fullname" . }}-claude
+              key: api-key
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}

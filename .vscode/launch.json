@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Spinwheel Backend",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/backend/main.go",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "CLAUDE_API_KEY": "${env:CLAUDE_API_KEY}",
+                "PORT": "${env:PORT}"
+            },
+            "args": [],
+            "showLog": true
+        },
+        {
+            "name": "Debug Spinwheel Backend",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/backend/main.go",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "CLAUDE_API_KEY": "${env:CLAUDE_API_KEY}",
+                "PORT": "${env:PORT}"
+            },
+            "args": [],
+            "showLog": true,
+            "stopOnEntry": false,
+            "console": "internalConsole",
+            "dlvFlags": [
+                "--check-go-version=false"
+            ]
+        }
+    ]
+}

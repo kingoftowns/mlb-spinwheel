@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+    env_file:
+      - ../backend/.env
+    environment:
+      - PORT=9090
+    ports:
+      - "9090:9090"
+    networks:
+      - devcontainer_network
+
+networks:
+  devcontainer_network:
+    driver: bridge

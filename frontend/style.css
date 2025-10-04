@@ -28,6 +28,82 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
+.input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#prompt-input {
+    padding: 12px 20px;
+    font-size: 1em;
+    border: 2px solid #fff;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.9);
+    outline: none;
+    transition: background 0.2s;
+}
+
+#prompt-input:focus {
+    background: rgba(255, 255, 255, 1);
+}
+
+#generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    font-size: 1.1em;
+    font-weight: bold;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+#generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 20px rgba(0,0,0,0.4);
+}
+
+#generate-btn:active {
+    transform: translateY(0);
+}
+
+#generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading, .error {
+    margin-bottom: 15px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.loading {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.error {
+    background: rgba(255, 0, 0, 0.3);
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
 .wheel-container {
     position: relative;
     display: flex;

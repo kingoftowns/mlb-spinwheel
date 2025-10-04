@@ -112,6 +112,10 @@ async function generateOptions() {
                 name,
                 color: colorPalette[index % colorPalette.length]
             }));
+            loading.textContent = `Generated ${data.options.length} options`;
+            setTimeout(() => {
+                hideLoading();
+            }, 2000);
             resizeCanvas();
             promptInput.value = '';
             result.textContent = '';
@@ -122,12 +126,12 @@ async function generateOptions() {
         console.error('Error generating options:', error);
         showError('Failed to generate options. Please try again.');
     } finally {
-        hideLoading();
         generateBtn.disabled = false;
     }
 }
 
 function showLoading() {
+    loading.textContent = 'Generating options...';
     loading.classList.remove('hidden');
 }
 

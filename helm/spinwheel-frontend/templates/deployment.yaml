@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "spinwheel-frontend.fullname" . }}
-  namespace: {{ .Values.namespace.name }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "spinwheel-frontend.labels" . | nindent 4 }}
 spec:

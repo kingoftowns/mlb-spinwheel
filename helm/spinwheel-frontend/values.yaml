@@ -1,12 +1,11 @@
-namespace:
-  name: spinwheel
+namespace: spinwheel
 
 replicaCount: 1
 
 image:
   repository: registry.k8s.blacktoaster.com/spinwheel-frontend
   pullPolicy: Always
-  tag: "latest"
+  tag: "26d06a1"
 
 service:
   type: ClusterIP

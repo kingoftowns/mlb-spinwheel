@@ -3,7 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "spinwheel-frontend.fullname" . }}
-  namespace: {{ .Values.namespace.name }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "spinwheel-frontend.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}

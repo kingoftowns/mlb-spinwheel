@@ -1,12 +1,11 @@
-namespace:
-  name: spinwheel
+namespace: spinwheel
 
 replicaCount: 1
 
 image:
   repository: registry.k8s.blacktoaster.com/spinwheel-backend
   pullPolicy: Always
-  tag: "latest"
+  tag: "26d06a0"
 
 service:
   type: ClusterIP
@@ -14,7 +13,7 @@ service:
 
 claude:
   # Set your Claude API key here or via --set claude.apiKey=YOUR_KEY
-  apiKey: ""
+  apiKey: "sk-ant-abc123"
 
 resources:
   limits:

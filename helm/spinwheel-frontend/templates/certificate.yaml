@@ -3,11 +3,12 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ include "spinwheel-frontend.fullname" . }}-cert
-  namespace: {{ .Values.namespace.name }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "spinwheel-frontend.labels" . | nindent 4 }}
 spec:
   secretName: {{ .Values.ingress.tls.secretName }}
+  commonName: {{ .Values.ingress.host }}
   issuerRef:
     name: {{ .Values.certificate.issuerName }}
     kind: {{ .Values.certificate.issuerKind }}

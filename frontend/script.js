@@ -218,11 +218,41 @@ function spinWheel() {
     const slotHeight = 60;
     const totalHeight = teams.length * slotHeight;
 
-    // Random spin distance (multiple full rotations plus random offset)
-    const minSpins = 4;
-    const maxSpins = 7;
-    const spins = Math.random() * (maxSpins - minSpins) + minSpins;
-    const totalDistance = spins * totalHeight;
+    // Pick a random winner first
+    const winningIndex = Math.floor(Math.random() * teams.length);
+
+    // Calculate the target offset
+    // The pointer is at canvas.height / 2
+    // We want winningIndex slot's center to be at the pointer
+    // Drawing logic: y = index * slotHeight - offset (for repeat 0)
+    // We want: y + slotHeight/2 = canvas.height / 2
+    // So: index * slotHeight - offset + slotHeight/2 = canvas.height / 2
+    // offset = index * slotHeight + slotHeight/2 - canvas.height / 2
+    const pointerY = canvas.height / 2;
+    let targetOffset = winningIndex * slotHeight + slotHeight / 2 - pointerY;
+
+    // Normalize to positive value within one cycle
+    while (targetOffset < 0) {
+        targetOffset += totalHeight;
+    }
+    targetOffset = targetOffset % totalHeight;
+
+    // Add multiple full rotations for visual effect
+    // Use a minimum pixel distance to ensure good visual effect even with few items
+    const minPixelDistance = 3000; // At least 3000 pixels of travel
+    const maxPixelDistance = 5000; // Up to 5000 pixels
+    const targetPixelDistance = Math.random() * (maxPixelDistance - minPixelDistance) + minPixelDistance;
+
+    // Calculate how many full rotations this represents
+    const spins = Math.floor(targetPixelDistance / totalHeight);
+
+    // Calculate total distance from current position to target (with extra spins)
+    const currentNormalized = currentOffset % totalHeight;
+    let deltaToTarget = targetOffset - currentNormalized;
+    if (deltaToTarget < 0) {
+        deltaToTarget += totalHeight; // Go forward to target
+    }
+    const totalDistance = spins * totalHeight + deltaToTarget;
 
     const startTime = Date.now();
     const startOffset = currentOffset;
@@ -242,12 +272,32 @@ function spinWheel() {
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
-            // Determine winner - which team is at center pointer
+            // Verify the landing position using same logic as drawing
+            const finalOffset = currentOffset % totalHeight;
             const pointerY = canvas.height / 2;
-            const normalizedOffset = currentOffset % totalHeight;
 
-            const relativePosition = (normalizedOffset + pointerY) % totalHeight;
-            const winningIndex = Math.floor(relativePosition / slotHeight) % teams.length;
+            // Find which slot is at the pointer (same as drawing logic)
+            let actualWinner = -1;
+            const repeatsNeeded = Math.ceil(canvas.height / totalHeight) + 2;
+
+            for (let repeat = -1; repeat <= repeatsNeeded; repeat++) {
+                for (let i = 0; i < teams.length; i++) {
+                    const y = repeat * totalHeight + i * slotHeight - finalOffset;
+                    const slotCenter = y + slotHeight / 2;
+
+                    if (Math.abs(slotCenter - pointerY) < slotHeight / 2) {
+                        actualWinner = i;
+                        console.log('Found at repeat', repeat, 'y:', y, 'center:', slotCenter);
+                        break;
+                    }
+                }
+                if (actualWinner !== -1) break;
+            }
+
+            console.log('Expected winner:', winningIndex, teams[winningIndex].name);
+            console.log('Actual winner:', actualWinner, teams[actualWinner]?.name);
+            console.log('Final offset:', finalOffset, 'Target offset:', targetOffset);
+            console.log('Canvas height:', canvas.height, 'Pointer Y:', pointerY);
 
             result.textContent = teams[winningIndex].name;
             isSpinning = false;

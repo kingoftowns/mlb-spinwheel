@@ -5,7 +5,7 @@ replicaCount: 1
 image:
   repository: registry.k8s.blacktoaster.com/spinwheel-frontend
   pullPolicy: Always
-  tag: "26d06a1"
+  tag: "latest"
 
 service:
   type: ClusterIP

@@ -7,29 +7,29 @@ A dynamic spinwheel application that generates wheel options from natural langua
 - **Dynamic Option Generation**: Generate wheel options via:
   - Natural language prompts (e.g., "MLB teams", "desserts", "programming languages")
   - Comma-separated lists (e.g., "Pizza, Tacos, Burgers, Sushi")
+  - Real-time web search for current information (e.g., "restaurants at The Grove", "today's Dodgers roster")
+- **Truly Random Selection**: Picks a random winner first, then spins to that location for fair results
+- **Web Search Integration**: Automatically searches the web for real-time, location-specific, or current data
 - **Persistent State**: Generated wheels remain active until you create a new one
-- **Claude API Integration**: Uses Claude Sonnet 4.5 for intelligent option generation
-- **Smooth Animations**: Price-is-right style vertical spin animation
-- **Responsive Design**: Works on desktop and mobile devices
-- **Microservices Architecture**: Separate frontend and backend services that can be deployed independently
+- **Claude API Integration**: Uses Claude Sonnet 4.5 with web search tool for intelligent option generation
+- **Smooth Animations**: Price-is-right style vertical spin animation with minimum spin distance for visual effect
 
 ## Project Structure
 
 ```
 SpinWheel/
 ├── backend/                    # Go API service
-│   ├── main.go                # API endpoints
+│   ├── main.go                # API endpoints with Claude web search integration
 │   ├── go.mod
-│   └── Dockerfile             # Backend container
+│   ├── Dockerfile             # Backend container
+│   └── helm/                  # Backend Kubernetes manifests
 ├── frontend/                   # Static web app
 │   ├── index.html
-│   ├── script.js
+│   ├── script.js              # Truly random spin logic
 │   ├── style.css
 │   ├── nginx.conf             # Nginx config with /api proxy
-│   └── Dockerfile             # Frontend container
-└── helm/
-    ├── spinwheel-backend/     # Backend Kubernetes manifests
-    └── spinwheel-frontend/    # Frontend Kubernetes manifests
+│   ├── Dockerfile             # Frontend container
+│   └── helm/                  # Frontend Kubernetes manifests
 ```
 
 ## Development Setup
@@ -70,29 +70,6 @@ npm start
 
 Frontend opens at http://localhost:3000 and proxies API requests to backend:8080.
 
-### Running Locally (Without Dev Container)
-
-#### 1. Set up environment variables
-
-```bash
-export CLAUDE_API_KEY=your_api_key_here
-```
-
-#### 2. Start the backend
-
-```bash
-cd backend
-go run main.go
-```
-
-#### 3. Start the frontend (in a separate terminal)
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
 ## Production Deployment
 
 ### Docker Build & Push
@@ -131,45 +108,12 @@ helm install spinwheel-frontend ./helm/spinwheel-frontend \
   --set ingress.host=spinwheel.yourdomain.com
 ```
 
-#### Deploy Both Together
-
-```bash
-# Deploy backend first
-helm upgrade --install spinwheel-backend ./helm/spinwheel-backend \
-  --set claude.apiKey=$CLAUDE_API_KEY \
-  --set image.tag=v1.0.0
-
-# Then deploy frontend
-helm upgrade --install spinwheel-frontend ./helm/spinwheel-frontend \
-  --set image.tag=v1.0.0
-```
-
-### Verify Deployment
-
-```bash
-# Check pods
-kubectl get pods -n spinwheel
-
-# Check services
-kubectl get svc -n spinwheel
-
-# Check backend logs
-kubectl logs -n spinwheel -l app.kubernetes.io/name=spinwheel-backend
-
-# Check frontend logs
-kubectl logs -n spinwheel -l app.kubernetes.io/name=spinwheel-frontend
-
-# Test backend health
-kubectl port-forward -n spinwheel svc/spinwheel-backend 8080:8080
-curl http://localhost:8080/api/health
-```
-
 ## API Endpoints
 
 ### Backend Service (port 8080)
 
 #### `POST /api/generate-options`
-Generate new wheel options.
+Generate new wheel options from a prompt or comma-separated list.
 
 **Request:**
 ```json
@@ -185,6 +129,12 @@ Generate new wheel options.
 }
 ```
 
+**Behavior:**
+- **Comma-separated lists**: Parsed directly without API call (e.g., "Pizza, Tacos, Burgers")
+- **Natural language prompts**: Sent to Claude API
+- **Web search**: Automatically triggered by Claude for real-time/location queries
+- **Response cleaning**: Automatically removes explanatory text, returns only the list
+
 #### `GET /api/current-options`
 Get the current wheel options (persisted in memory).
 
@@ -198,89 +148,37 @@ Get the current wheel options (persisted in memory).
 #### `GET /api/health`
 Health check endpoint.
 
-## Architecture
-
-### Frontend (Nginx + Static Files)
-- Serves static HTML/CSS/JS
-- Nginx proxies `/api/*` requests to backend service
-- Exposed via Ingress with TLS
-
-### Backend (Go API)
-- RESTful API endpoints
-- Claude API integration
-- In-memory state persistence
-- Internal ClusterIP service
-
 ### Communication Flow
 ```
-User → Ingress → Frontend (Nginx)
+User → Ingress → Frontend (Nginx) → Static Files
                     ↓
-                 /api/* → Backend Service → Claude API
+                 /api/* → Backend Service → Claude API (with web search tool)
+                                               ↓
+                                           Web Search (when needed)
 ```
 
-## Configuration
+### Spin Algorithm
 
-### Backend Environment Variables
+The wheel uses a truly random selection algorithm:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `8080` |
-| `CLAUDE_API_KEY` | Anthropic Claude API key | (required) |
+1. **Random Selection**: When spin button is clicked, a winner is randomly selected using `Math.random()`
+2. **Target Calculation**: The exact offset needed to land on the winner is calculated
+3. **Visual Effect**: 3000-5000 pixels of spinning distance is added for visual drama
+4. **Smooth Animation**: Easing function provides smooth deceleration to the target
 
-### Frontend Nginx Configuration
+This ensures fair, truly random results regardless of visual physics.
 
-The frontend nginx.conf proxies API requests to the backend service:
+### How Web Search Works
 
-```nginx
-location /api/ {
-    proxy_pass http://spinwheel-backend:8080;
-    ...
-}
-```
+The backend automatically enables Claude's web search tool for generating options. Claude intelligently decides when to use web search based on the prompt:
 
-## Troubleshooting
+**Web search is used for:**
+- Real-time information: "today's Dodgers roster", "NFL teams playing today"
+- Location-specific queries: "restaurants at The Grove Los Angeles", "coffee shops in Santa Monica"
 
-### Backend won't start
-```bash
-cd backend
-go run main.go
-# Check logs for errors
-```
-
-### Frontend can't reach backend in Kubernetes
-```bash
-# Verify backend service exists
-kubectl get svc -n spinwheel spinwheel-backend
-
-# Check nginx logs
-kubectl logs -n spinwheel -l app.kubernetes.io/name=spinwheel-frontend
-
-# Verify service DNS resolution
-kubectl run -it --rm debug --image=busybox --restart=Never -- \
-  nslookup spinwheel-backend.spinwheel.svc.cluster.local
-```
-
-### Claude API errors
-- Verify API key in secret: `kubectl get secret -n spinwheel spinwheel-backend-claude -o yaml`
-- Check backend logs: `kubectl logs -n spinwheel -l app.kubernetes.io/name=spinwheel-backend`
-- Verify API credits at https://console.anthropic.com/
-
-## Independent Deployment Benefits
-
-- **Scale independently**: Scale frontend replicas separately from backend
-- **Deploy separately**: Update frontend UI without touching backend API
-- **Different lifecycles**: Frontend can be static CDN, backend can be serverless
-- **Technology flexibility**: Replace either component without affecting the other
-
-## Example: Scaling
-
-```bash
-# Scale backend for more API capacity
-kubectl scale deployment -n spinwheel spinwheel-backend --replicas=3
-
-# Scale frontend for more web traffic
-kubectl scale deployment -n spinwheel spinwheel-frontend --replicas=5
-```
+**Web search is NOT used for:**
+- Static, well-known lists: "MLB teams", "NBA teams", "US states"
+- General categories: "desserts", "programming languages", "colors"
 
 ## License
 

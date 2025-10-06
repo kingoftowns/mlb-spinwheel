@@ -27,11 +27,28 @@ type ClaudeRequest struct {
 	Model     string    `json:"model"`
 	MaxTokens int       `json:"max_tokens"`
 	Messages  []Message `json:"messages"`
+	Tools     []Tool    `json:"tools,omitempty"`
 }
 
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+}
+
+type Tool struct {
+	Type           string          `json:"type"`
+	Name           string          `json:"name"`
+	MaxUses        *int            `json:"max_uses,omitempty"`
+	AllowedDomains []string        `json:"allowed_domains,omitempty"`
+	BlockedDomains []string        `json:"blocked_domains,omitempty"`
+	UserLocation   *UserLocation   `json:"user_location,omitempty"`
+}
+
+type UserLocation struct {
+	Type    string `json:"type"`
+	City    string `json:"city,omitempty"`
+	State   string `json:"state,omitempty"`
+	Country string `json:"country"`
 }
 
 type ClaudeResponse struct {
@@ -40,7 +57,7 @@ type ClaudeResponse struct {
 
 type ContentBlock struct {
 	Type string `json:"type"`
-	Text string `json:"text"`
+	Text string `json:"text,omitempty"`
 }
 
 // Store current wheel options in memory
@@ -231,13 +248,86 @@ func parseCommaSeparatedList(input string) []string {
 	return options
 }
 
+func cleanResponseText(text string) string {
+	// Remove common preamble patterns
+	preambles := []string{
+		"Based on my search results, ",
+		"Based on my search, ",
+		"Based on the search results, ",
+		"I found ",
+		"Here is the list: ",
+		"Here are the items: ",
+		"The list is: ",
+	}
+
+	cleaned := text
+	for _, preamble := range preambles {
+		cleaned = strings.Replace(cleaned, preamble, "", 1)
+	}
+
+	// If there's a colon followed by items, take everything after the last colon
+	if idx := strings.LastIndex(cleaned, ":\n"); idx != -1 {
+		cleaned = cleaned[idx+2:]
+	} else if idx := strings.LastIndex(cleaned, ": "); idx != -1 {
+		cleaned = cleaned[idx+2:]
+	}
+
+	// Remove any leading/trailing whitespace and newlines
+	cleaned = strings.TrimSpace(cleaned)
+
+	// If the text starts with a sentence (contains period before first comma),
+	// try to extract just the comma-separated part
+	firstComma := strings.Index(cleaned, ",")
+	firstPeriod := strings.Index(cleaned, ".")
+
+	if firstPeriod != -1 && firstComma != -1 && firstPeriod < firstComma {
+		// Find the last sentence-ending period before the list starts
+		lines := strings.Split(cleaned, "\n")
+		for i, line := range lines {
+			if strings.Contains(line, ",") && !strings.Contains(line, ". ") {
+				// This line looks like it's the start of the comma-separated list
+				cleaned = strings.Join(lines[i:], "\n")
+				break
+			}
+		}
+	}
+
+	return cleaned
+}
+
 func callClaudeAPI(prompt string) ([]string, error) {
 	apiKey := os.Getenv("CLAUDE_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("CLAUDE_API_KEY environment variable not set")
 	}
 
-	claudePrompt := fmt.Sprintf("Generate a complete comma-separated list of ALL items for: %s. Include every single item that belongs in this category. For sports teams, include all teams in the league. Return ONLY the comma-separated list with no explanation, no numbering, no extra text.", prompt)
+	claudePrompt := fmt.Sprintf(`Generate a complete comma-separated list of ALL items for: %s.
+
+WHEN TO USE WEB SEARCH:
+- Only use web search if the request requires current/real-time information (e.g., "today's roster", "current menu", "restaurants at [specific location]")
+- Do NOT use web search for static, well-known lists (e.g., "NBA teams", "NFL teams", "US states", "countries")
+
+OUTPUT FORMAT - CRITICAL:
+Your response must contain ONLY the comma-separated list. Do not include:
+- Any explanatory text or preamble (like "Based on my search results" or "I found")
+- No sentences or explanations
+- No numbering
+- No extra text before or after the list
+- Just the comma-separated items only
+
+Example format: Item One, Item Two, Item Three, Item Four
+
+Return ONLY the comma-separated list.`, prompt)
+
+	// Configure web search tool
+	maxUses := 5
+	tools := []Tool{
+		{
+			Type:    "web_search_20250305",
+			Name:    "web_search",
+			MaxUses: &maxUses,
+		},
+	}
 
 	reqBody := ClaudeRequest{
 		Model:     "claude-sonnet-4-5-20250929",
@@ -248,6 +338,7 @@ func callClaudeAPI(prompt string) ([]string, error) {
 				Content: claudePrompt,
 			},
 		},
+		Tools: tools,
 	}
 
 	jsonData, err := json.Marshal(reqBody)
@@ -289,7 +380,30 @@ func callClaudeAPI(prompt string) ([]string, error) {
 		return nil, fmt.Errorf("empty response from Claude API")
 	}
 
+	// Log response structure to see if web search was used
+	log.Printf("Claude returned %d content blocks", len(claudeResp.Content))
+	for i, block := range claudeResp.Content {
+		log.Printf("Block %d: type=%s", i, block.Type)
+	}
+
+	// Extract text from all content blocks (may include tool use results)
+	var text string
+	for _, block := range claudeResp.Content {
+		if block.Type == "text" && block.Text != "" {
+			text += block.Text
+		}
+	}
+
+	if text == "" {
+		return nil, fmt.Errorf("no text content in Claude API response")
+	}
+
+	log.Printf("Claude response text: %q", text)
+
+	// Clean up any preamble or explanation text
+	text = cleanResponseText(text)
+	log.Printf("Cleaned text: %q", text)
+
 	// Parse the comma-separated response
-	text := claudeResp.Content[0].Text
 	return parseCommaSeparatedList(text), nil
 }

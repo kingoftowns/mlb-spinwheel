@@ -131,7 +131,7 @@ async function generateOptions() {
 }
 
 function showLoading() {
-    loading.textContent = 'Generating options...';
+    loading.textContent = 'Generating options (may search web for current info)...';
     loading.classList.remove('hidden');
 }
 

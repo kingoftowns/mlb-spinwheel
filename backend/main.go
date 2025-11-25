@@ -182,8 +182,12 @@ func generateOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	var options []string
 	var err error
 
-	// Detect if input is a comma-separated list
-	if isCommaSeparatedList(req.Prompt) {
+	// Check for static wheels first
+	if staticOptions, found := getStaticWheel(req.Prompt); found {
+		options = staticOptions
+		log.Printf("Using static wheel with %d options", len(options))
+	} else if isCommaSeparatedList(req.Prompt) {
+		// Detect if input is a comma-separated list
 		options = parseCommaSeparatedList(req.Prompt)
 		log.Printf("Parsed comma-separated list: %d items", len(options))
 	} else {

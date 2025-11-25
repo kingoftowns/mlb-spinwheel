@@ -12,6 +12,8 @@ spec:
       {{- include "spinwheel-backend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
       labels:
         {{- include "spinwheel-backend.selectorLabels" . | nindent 8 }}
     spec:

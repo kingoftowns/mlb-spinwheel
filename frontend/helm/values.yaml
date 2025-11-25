@@ -5,11 +5,15 @@ replicaCount: 1
 image:
   repository: registry.k8s.blacktoaster.com/spinwheel-frontend
   pullPolicy: Always
-  tag: "latest"
+  tag: "2ddd1cb"
 
 service:
   type: ClusterIP
   port: 80
+
+opponentSelector:
+  # URL for the opponent selector (optional)
+  url: "https://imperialism.k8s.blacktoaster.com"
 
 ingress:
   enabled: true

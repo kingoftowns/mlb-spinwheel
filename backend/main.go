@@ -19,8 +19,10 @@ type GenerateRequest struct {
 }
 
 type GenerateResponse struct {
-	Options []string `json:"options"`
-	Error   string   `json:"error,omitempty"`
+	Options []string         `json:"options"`
+	Teams   []TeamData       `json:"teams,omitempty"`
+	League  string           `json:"league,omitempty"`
+	Error   string           `json:"error,omitempty"`
 }
 
 type ClaudeRequest struct {
@@ -63,6 +65,8 @@ type ContentBlock struct {
 // Store current wheel options in memory
 var (
 	currentOptions []string
+	currentTeams   []TeamData
+	currentLeague  string
 	optionsMutex   sync.RWMutex
 )
 
@@ -133,12 +137,16 @@ func getCurrentOptionsHandler(w http.ResponseWriter, r *http.Request) {
 
 	optionsMutex.RLock()
 	options := currentOptions
+	teams := currentTeams
+	league := currentLeague
 	optionsMutex.RUnlock()
 
 	log.Printf("Returning %d current options", len(options))
 
 	json.NewEncoder(w).Encode(GenerateResponse{
 		Options: options,
+		Teams:   teams,
+		League:  league,
 	})
 }
 
@@ -180,11 +188,15 @@ func generateOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received prompt: %q", req.Prompt)
 
 	var options []string
+	var teams []TeamData
+	var league string
 	var err error
 
 	// Check for static wheels first
-	if staticOptions, found := getStaticWheel(req.Prompt); found {
+	if staticOptions, staticTeams, staticLeague, found := getStaticWheel(req.Prompt); found {
 		options = staticOptions
+		teams = staticTeams
+		league = staticLeague
 		log.Printf("Using static wheel with %d options", len(options))
 	} else if isCommaSeparatedList(req.Prompt) {
 		// Detect if input is a comma-separated list
@@ -207,12 +219,16 @@ func generateOptionsHandler(w http.ResponseWriter, r *http.Request) {
 	// Update stored options
 	optionsMutex.Lock()
 	currentOptions = options
+	currentTeams = teams
+	currentLeague = league
 	optionsMutex.Unlock()
 
 	log.Printf("Successfully generated %d options", len(options))
 
 	json.NewEncoder(w).Encode(GenerateResponse{
 		Options: options,
+		Teams:   teams,
+		League:  league,
 	})
 }
 

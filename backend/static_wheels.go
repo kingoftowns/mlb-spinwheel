@@ -91,7 +91,7 @@ var staticWheels = []StaticWheel{
 }
 
 // getStaticWheel checks if the prompt matches a static wheel and returns its options
-func getStaticWheel(prompt string) ([]string, bool) {
+func getStaticWheel(prompt string) ([]string, []TeamData, string, bool) {
 	normalizedPrompt := strings.ToLower(strings.TrimSpace(prompt))
 
 	// Map of keywords to wheel IDs
@@ -110,7 +110,7 @@ func getStaticWheel(prompt string) ([]string, bool) {
 
 	wheelID, found := keywords[normalizedPrompt]
 	if !found {
-		return nil, false
+		return nil, nil, "", false
 	}
 
 	// Find the matching static wheel
@@ -121,9 +121,9 @@ func getStaticWheel(prompt string) ([]string, bool) {
 				options[i] = team.Name
 			}
 			log.Printf("Using static wheel '%s' with %d options", wheelID, len(options))
-			return options, true
+			return options, wheel.Teams, wheelID, true
 		}
 	}
 
-	return nil, false
+	return nil, nil, "", false
 }

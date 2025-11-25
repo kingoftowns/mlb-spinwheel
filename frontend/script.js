@@ -8,6 +8,10 @@ const colorPalette = [
 ];
 
 let teams = [];
+let teamData = [];
+let currentLeague = '';
+let selectedTeam = null;
+
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const spinBtn = document.getElementById('spin-btn');
@@ -35,6 +39,8 @@ async function loadCurrentOptions() {
                 name,
                 color: colorPalette[index % colorPalette.length]
             }));
+            teamData = data.teams || [];
+            currentLeague = data.league || '';
             resizeCanvas();
         }
     } catch (error) {
@@ -112,13 +118,16 @@ async function generateOptions() {
                 name,
                 color: colorPalette[index % colorPalette.length]
             }));
+            teamData = data.teams || [];
+            currentLeague = data.league || '';
             loading.textContent = `Generated ${data.options.length} options`;
             setTimeout(() => {
                 hideLoading();
             }, 2000);
             resizeCanvas();
             promptInput.value = '';
-            result.textContent = '';
+            result.innerHTML = '';
+            selectedTeam = null;
         } else {
             showError('No options generated. Please try again.');
         }
@@ -299,13 +308,40 @@ function spinWheel() {
             console.log('Final offset:', finalOffset, 'Target offset:', targetOffset);
             console.log('Canvas height:', canvas.height, 'Pointer Y:', pointerY);
 
-            result.textContent = teams[winningIndex].name;
+            selectedTeam = winningIndex;
+            displayResult(teams[winningIndex].name);
             isSpinning = false;
             spinBtn.disabled = false;
         }
     }
 
     animate();
+}
+
+// Display the result with optional link
+function displayResult(teamName) {
+    // Check if we should show as link (mlb or nba league with team data)
+    if ((currentLeague === 'mlb' || currentLeague === 'nba') &&
+        teamData && teamData.length > 0 &&
+        selectedTeam !== null) {
+
+        const team = teamData[selectedTeam];
+        console.log('Team data:', team);
+
+        if (team && team.Identifier) {
+            const baseUrl = window.OPPONENT_SELECTOR_URL || '';
+
+            if (baseUrl) {
+                const url = `${baseUrl}?league=${currentLeague}&team=${team.Identifier}`;
+                result.innerHTML = `<a href="${url}" target="_blank">${teamName}</a>`;
+                console.log('Created link:', url);
+                return;
+            }
+        }
+    }
+
+    // Otherwise just show plain text
+    result.textContent = teamName;
 }
 
 // Event listeners

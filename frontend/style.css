@@ -179,3 +179,14 @@ h1 {
     word-wrap: break-word;
     padding: 0 10px;
 }
+
+#result a {
+    color: white;
+    text-decoration: underline;
+    transition: color 0.2s, text-shadow 0.2s;
+}
+
+#result a:hover {
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}

@@ -21,7 +21,7 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    external-dns.alpha.kubernetes.io/target: "pi5.k8s.blacktoaster.com"
+    external-dns.alpha.kubernetes.io/target: "in.k8s.blacktoaster.com"
   host: spinwheel.k8s.blacktoaster.com
   tls:
     enabled: true
